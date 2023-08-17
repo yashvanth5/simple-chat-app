@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+      }
+
+      .chat-container {
+        max-width: 600px;
+        margin: 0 auto;
+        border: 1px solid #ccc;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .chat-header {
+        background-color: #075e54;
+        color: #fff;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+      }
+
+      .chat-messages {
+        padding: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .message {
+        margin: 5px;
+        padding: 10px;
+        border-radius: 10px;
+      }
+
+      .incoming {
+        background-color: #f0f0f0;
+      }
+
+      .outgoing {
+        background-color: #dcf8c6;
+        align-self: flex-end;
+      }
+
+      .chat-input {
+        display: flex;
+        padding: 10px;
+        background-color: #f0f0f0;
+      }
+
+      .chat-input input {
+        flex: 1;
+        padding: 8px;
+        border: none;
+        border-radius: 20px;
+        margin-right: 10px;
+      }
+
+      .chat-input button {
+        background-color: #075e54;
+        color: #fff;
+        border: none;
+        border-radius: 20px;
+        padding: 8px 15px;
+        cursor: pointer;
+      }
+
+      @media (max-width: 768px) {
+        .chat-container {
+          max-width: 100%;
+        }
+      }
+    </style>
+    <title>Chat Application</title>
+  </head>
+  <body>
+    <div class="chat-container">
+      <div class="chat-header">Chat with John</div>
+
+      <div class="message incoming">Hello there!</div>
+      <div class="message outgoing">Hi! How can I help you?</div>
+      <!-- More messages here -->
+      <div class="chat-messages"></div>
+
+      <div class="chat-input">
+        <input
+          type="text"
+          id="messageInput"
+          placeholder="Type your message..."
+        />
+        <button id="button">Send</button>
+      </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
+    <script src="client.js"></script>
+  </body>
+</html>
