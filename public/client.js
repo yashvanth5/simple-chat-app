@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const socket = io("http://localhost:3000"); // Connect to the server
+  const socket = io("https://social-chat-app-g6ri.onrender.com/"); // Connect to the server
 
   const sendButton = document.getElementById("button");
   const inputField = document.getElementById("messageInput");
