@@ -6,6 +6,10 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
+// app.get('/', (req, res) => {
+//   res.sendFile(__dirname + '/index.html');
+// });
+
 app.use(express.static(__dirname + "/public"));
 
 io.on("connection", (socket) => {
@@ -20,7 +24,7 @@ io.on("connection", (socket) => {
   });
 });
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3600;
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
