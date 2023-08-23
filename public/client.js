@@ -15,12 +15,49 @@ document.addEventListener("DOMContentLoaded", () => {
     const message = messageInput.value.trim();
 
     if (name && message) {
-      socket.emit("message", { name, message, color: currentSenderColor });
-      if (isNameEditable) {
-        nameInput.disabled = true;
-        isNameEditable = false;
+      if (message.toLowerCase() === "/clear") {
+        chatMessages.innerHTML = "";
+        messageInput.value = "";
+      } else if (message.toLowerCase() === "/help") {
+        alert(
+          "Available slash commands :\n" +
+            "/help : Show this help message\n" +
+            "/clear : Clear the chat\n" +
+            "/random : Generate a random number\n" +
+            "/about: Info about creator of this app"
+        );
+        messageInput.value = "";
+      } else if (message.toLowerCase() === "/random") {
+        const previousMessages = chatMessages.innerHTML;
+        const randomNumber = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
+        chatMessages.innerHTML =
+          previousMessages +
+          `<div class="message incoming">
+            <div class="message-content">
+              <h3 class="message-sender">You</h3>
+              <p class="message-text">Random number: ${randomNumber}</p>
+            </div>
+          </div>`;
+        messageInput.value = "";
+      } else if (message.toLowerCase() === "/about") {
+        const previousMessages = chatMessages.innerHTML;
+        chatMessages.innerHTML =
+          previousMessages +
+          `<div class="message incoming">
+            <div class="message-content">
+              <h3 class="message-sender">You</h3>
+              <p class="message-text">This is a chat app created by [Yashvanth].</p>
+            </div>
+          </div>`;
+        messageInput.value = "";
+      } else {
+        socket.emit("message", { name, message, color: currentSenderColor });
+        if (isNameEditable) {
+          nameInput.disabled = true;
+          isNameEditable = false;
+        }
+        messageInput.value = "";
       }
-      messageInput.value = "";
     }
   });
 
