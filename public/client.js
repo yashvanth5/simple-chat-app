@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const socket = io("");
+  const socket = io();
 
   const sendButton = document.getElementById("button");
   const nameInput = document.getElementById("nameInput");
@@ -7,14 +7,41 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatMessages = document.querySelector(".chat-messages");
   const changeNameButton = document.getElementById("changeNameButton");
 
+  const onlineUsersList = document.querySelector(".user-list"); // Add this line
+  const onlineUsers = new Set();
+
   let currentSenderColor = getRandomColor();
   let isNameEditable = true;
+
+  nameInput.value = "";
+  if (nameInput.value.trim() && !isNameEditable) {
+    socket.emit("join", nameInput.value.trim());
+  }
 
   sendButton.addEventListener("click", () => {
     const name = nameInput.value.trim();
     const message = messageInput.value.trim();
 
     if (name && message) {
+      // Add the new user to the online users list
+
+      onlineUsers.delete(nameInput.value.trim());
+
+      // Add the new name to online users list
+      onlineUsers.add(name);
+
+      // Clear and update the online users list
+      onlineUsersList.innerHTML = "";
+      onlineUsers.forEach((user) => {
+        const userItem = document.createElement("li");
+        userItem.textContent = user;
+        userItem.setAttribute("data-user", user);
+        onlineUsersList.appendChild(userItem);
+      });
+
+      // Emit the "join" event to inform the server that a new user has joined
+      socket.emit("join", name);
+
       if (message.toLowerCase() === "/clear") {
         chatMessages.innerHTML = "";
         messageInput.value = "";
@@ -52,6 +79,24 @@ document.addEventListener("DOMContentLoaded", () => {
         messageInput.value = "";
       } else {
         socket.emit("message", { name, message, color: currentSenderColor });
+
+        // added below code
+
+        if (!onlineUsers.has(name)) {
+          onlineUsers.add(name);
+          onlineUsersList.innerHTML = "";
+          onlineUsers.forEach((user) => {
+            const userItem = document.createElement("li");
+            userItem.textContent = user;
+            onlineUsersList.appendChild(userItem);
+          });
+
+          // Emit the "join" event to inform the server that a new user has joined
+          socket.emit("join", name);
+        }
+
+        // till above
+
         if (isNameEditable) {
           nameInput.disabled = true;
           isNameEditable = false;
@@ -91,6 +136,19 @@ document.addEventListener("DOMContentLoaded", () => {
     chatMessages.appendChild(newMessage);
   });
 
+  // added this below so make sure to check wht its not working
+
+  socket.on("onlineUsers", (users) => {
+    // Update the online users list
+    onlineUsersList.innerHTML = "";
+    users.forEach((user) => {
+      const userItem = document.createElement("li");
+      userItem.textContent = user;
+      userItem.setAttribute("data-user", user);
+      onlineUsersList.appendChild(userItem);
+    });
+  });
+
   const replaceWordsWithEmojis = (msg) => {
     const wordToEmojiMap = {
       hey: "🖐️",
@@ -101,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
       love: "❤️",
       lol: "😂",
       good: "👍",
-      react: "*",
+      react: " ⚛️",
       congratulation: "🎉",
     };
 
@@ -117,4 +175,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const colors = ["#dcf8c6", "#e0e0e0", "#ffd700", "#87ceeb", "#ffb6c1"];
     return colors[Math.floor(Math.random() * colors.length)];
   }
+
+  function handleKeyPress(event) {
+    if (event.keyCode === 13) {
+      event.preventDefault(); // Prevent the form from submitting
+      sendButton.click(); // Trigger the "Send" button's click event
+    }
+  }
+
+  messageInput.addEventListener("keypress", handleKeyPress);
 });
