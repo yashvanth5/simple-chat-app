@@ -5,10 +5,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const nameInput = document.getElementById("nameInput");
   const messageInput = document.getElementById("messageInput");
   const chatMessages = document.querySelector(".chat-messages");
-  const changeNameButton = document.getElementById("changeNameButton");
 
   const onlineUsersList = document.querySelector(".user-list"); // Add this line
   const onlineUsers = new Set();
+
+  const onlineUsersCount = document.getElementById("onlineUsersCount");
+
+  const emojiToggle = document.getElementById("emojiToggle");
+
+  let sendWithEmojis = emojiToggle.checked; // Initial value
+
+  emojiToggle.addEventListener("change", () => {
+    sendWithEmojis = emojiToggle.checked;
+  });
 
   let currentSenderColor = getRandomColor();
   let isNameEditable = true;
@@ -25,24 +34,93 @@ document.addEventListener("DOMContentLoaded", () => {
     if (name && message) {
       // Add the new user to the online users list
 
-      onlineUsers.delete(nameInput.value.trim());
+      if (!onlineUsers.has(name)) {
+        onlineUsers.add(name);
+        onlineUsersList.innerHTML = "";
+        onlineUsers.forEach((user) => {
+          const userItem = document.createElement("li");
+          userItem.textContent = user;
+          userItem.setAttribute("data-user", user);
+          onlineUsersList.appendChild(userItem);
+        });
 
-      // Add the new name to online users list
-      onlineUsers.add(name);
+        // Emit the "join" event to inform the server that a new user has joined
+        socket.emit("join", name);
+      }
 
-      // Clear and update the online users list
-      onlineUsersList.innerHTML = "";
-      onlineUsers.forEach((user) => {
-        const userItem = document.createElement("li");
-        userItem.textContent = user;
-        userItem.setAttribute("data-user", user);
-        onlineUsersList.appendChild(userItem);
-      });
+      if (message.toLowerCase().startsWith("/calc ")) {
+        const command = message.split(" ");
+        if (command.length === 2) {
+          const action = command[0].toLowerCase();
+          const expression = command[1];
 
-      // Emit the "join" event to inform the server that a new user has joined
-      socket.emit("join", name);
+          // Handle the /calc command
+          if (action === "/calc") {
+            try {
+              const result = eval(expression);
+              // Provide feedback to the user
+              chatMessages.innerHTML += `<div class="message incoming">
+                <div class="message-content">
+                  <h3 class="message-sender">You</h3>
+                  <p class="message-text">Result of "${expression}" is ${result}</p>
+                </div>
+              </div>`;
+            } catch (error) {
+              // Provide feedback for invalid expressions
+              chatMessages.innerHTML += `<div class="message incoming">
+                <div class="message-content">
+                  <h3 class="message-sender">You</h3>
+                  <p class="message-text">Invalid expression: "${expression}"</p>
+                </div>
+              </div>`;
+            }
+            messageInput.value = "";
+            return; // Exit the event listener
+          }
+        }
+      } else if (message.toLowerCase().startsWith("/rem ")) {
+        const parts = message.split(" ");
+        const action = parts[0].toLowerCase();
+        const name = parts[1];
+        const value = parts.slice(2).join(" ");
 
-      if (message.toLowerCase() === "/clear") {
+        if (action === "/rem") {
+          if (value) {
+            // Store the value associated with the name in localStorage
+            localStorage.setItem(name, value);
+
+            // Provide feedback to the user
+            chatMessages.innerHTML += `<div class="message incoming">
+              <div class="message-content">
+                <h3 class="message-sender">You</h3>
+                <p class="message-text">Saved value "${value}" with key "${name}"</p>
+              </div>
+            </div>`;
+          } else {
+            // Retrieve the stored value associated with the name from localStorage
+            const storedValue = localStorage.getItem(name);
+            if (storedValue !== null) {
+              // Display the stored value in the chat
+              chatMessages.innerHTML += `<div class="message incoming">
+                <div class="message-content">
+                  <h3 class="message-sender">You</h3>
+                  <p class="message-text">Recalled value "${storedValue}" for key "${name}"</p>
+                </div>
+              </div>`;
+            } else {
+              // Display a message if the name is not found
+              chatMessages.innerHTML += `<div class="message incoming">
+                <div class="message-content">
+                  <h3 class="message-sender">You</h3>
+                  <p class="message-text">No value found for key "${name}"</p>
+                </div>
+              </div>`;
+            }
+          }
+          messageInput.value = "";
+          return; // Exit the event listener
+        }
+      } else if (message.toLowerCase() === "/clear") {
         chatMessages.innerHTML = "";
         messageInput.value = "";
       } else if (message.toLowerCase() === "/help") {
@@ -106,11 +184,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  changeNameButton.addEventListener("click", () => {
-    nameInput.disabled = false;
-    isNameEditable = true;
-  });
-
   socket.on("message", (data) => {
     const newMessage = document.createElement("div");
     newMessage.className =
@@ -126,8 +199,18 @@ document.addEventListener("DOMContentLoaded", () => {
     messageSender.textContent = data.name;
     const messageText = document.createElement("p");
     messageText.className = "message-text";
-    const messageWithEmojis = replaceWordsWithEmojis(data.message);
-    messageText.textContent = messageWithEmojis;
+    if (sendWithEmojis) {
+      const messageWithEmojis = replaceWordsWithEmojis(
+        data.message,
+        emojiToggle.checked
+      );
+      messageText.textContent = messageWithEmojis;
+    } else {
+      messageText.textContent = data.message;
+    }
+
+    // const messageWithEmojis = replaceWordsWithEmojis(data.message);
+    // messageText.textContent = messageWithEmojis;
 
     messageContent.appendChild(messageSender);
     messageContent.appendChild(messageText);
@@ -141,6 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
   socket.on("onlineUsers", (users) => {
     // Update the online users list
     onlineUsersList.innerHTML = "";
+    onlineUsersCount.textContent = users.length;
     users.forEach((user) => {
       const userItem = document.createElement("li");
       userItem.textContent = user;
@@ -149,7 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  const replaceWordsWithEmojis = (msg) => {
+  const replaceWordsWithEmojis = (msg, sendWithEmojis) => {
     const wordToEmojiMap = {
       hey: "🖐️",
       hello: "👋",
@@ -166,7 +250,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const words = msg.split(" ");
 
     const emojisReplacedMessage = words
-      .map((word) => wordToEmojiMap[word.toLowerCase()] || word)
+      // .map((word) => wordToEmojiMap[word.toLowerCase()] || word)
+      .map((word) =>
+        sendWithEmojis ? wordToEmojiMap[word.toLowerCase()] || word : word
+      )
       .join(" ");
     return emojisReplacedMessage;
   };

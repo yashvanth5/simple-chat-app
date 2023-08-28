@@ -149,6 +149,7 @@
         font-size: 24px;
         font-weight: bold;
       }
+
       @media (max-width: 768px) {
         .chat-box {
           flex-direction: column;
@@ -172,12 +173,18 @@
     <nav class="navigation">
       <span class="app-name">PING CHAT</span>
       <!-- You can add other navigation elements here -->
+      <div class="emoji-toggle">
+        <label>
+          <input type="checkbox" id="emojiToggle" />
+          Emoji Mode
+        </label>
+      </div>
     </nav>
 
     <div class="chat-box">
       <aside class="chat-sidebar">
         <div class="online-users">
-          <h3>Online Users</h3>
+          <h3>Online Users <span id="onlineUsersCount">0</span></h3>
           <ul class="user-list">
             <!-- Add more user names here -->
           </ul>
@@ -195,7 +202,7 @@
         <div class="chat-input">
           <div class="chat-input-name">
             <input type="text" id="nameInput" placeholder="Your Name" />
-            <button id="changeNameButton">Change Name</button>
+            <!-- <button id="changeNameButton">Change Name</button> -->
           </div>
           <input
             type="text"
